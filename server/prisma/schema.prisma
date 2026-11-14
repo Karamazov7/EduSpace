@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  FACULTY
+  ADMIN
+  LAB_INCHARGE
+  HOD
+  TIMETABLE_COORDINATOR
+  MAINTENANCE_STAFF
+  MANAGEMENT
+}
+
+enum RoomType {
+  CLASSROOM
+  LAB
+}
+
+enum RoomStatus {
+  OPERATIONAL
+  NON_OPERATIONAL
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  CANCELLED
+  AFFECTED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+model User {
+  id               Int      @id @default(autoincrement())
+  collegeId        String   @unique @map("college_id")
+  name             String
+  email            String   @unique
+  passwordHash     String   @map("password_hash")
+  role             Role     @default(STUDENT)
+  department       String?
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  bookings         Booking[]          @relation("Requester")
+  reviewedBookings Booking[]          @relation("Reviewer")
+  blocksCreated    MaintenanceBlock[]
+  notifications    Notification[]
+
+  @@map("users")
+}
+
+model Room {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  type        RoomType
+  capacity    Int
+  building    String?
+  facilities  String[]
+  status      RoomStatus @default(OPERATIONAL)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  equipment         Equipment[]
+  bookings          Booking[]
+  maintenanceBlocks MaintenanceBlock[]
+
+  @@map("rooms")
+}
+
+model Equipment {
+  id       Int             @id @default(autoincrement())
+  roomId   Int
+  name     String
+  quantity Int             @default(1)
+  status   EquipmentStatus @default(AVAILABLE)
+  room     Room            @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@map("equipment")
+}
+
+model Booking {
+  id            Int           @id @default(autoincrement())
+  userId        Int           @map("user_id")
+  roomId        Int           @map("room_id")
+  collegeId     String
+  classStrength Int
+  purpose       String
+  startTime     DateTime      @map("start_time")
+  endTime       DateTime      @map("end_time")
+  status        BookingStatus
+  reviewedById  Int?
+  reviewNote    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user       User  @relation("Requester", fields: [userId], references: [id])
+  reviewedBy User? @relation("Reviewer", fields: [reviewedById], references: [id])
+  room       Room  @relation(fields: [roomId], references: [id])
+
+  @@index([roomId, startTime, endTime])
+  @@index([userId])
+  @@map("bookings")
+}
+
+model MaintenanceBlock {
+  id          Int       @id @default(autoincrement())
+  roomId      Int
+  reason      String
+  startDate   DateTime
+  endDate     DateTime
+  createdById Int
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  room      Room @relation(fields: [roomId], references: [id])
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([roomId])
+  @@map("maintenance_blocks")
+}
+
+model Notification {
+  id        Int                @id @default(autoincrement())
+  userId    Int
+  type      String
+  subject   String
+  message   String
+  status    NotificationStatus @default(PENDING)
+  error     String?
+  createdAt DateTime           @default(now())
+  sentAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
