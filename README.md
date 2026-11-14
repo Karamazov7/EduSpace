@@ -2,7 +2,7 @@
 
 A web app for searching, booking and managing classrooms and labs at NIT Calicut. It prevents double bookings, suggests alternative rooms, handles maintenance and shows utilisation reports.
 
-Built from the project's [SRS](docs/SRS.pdf): React (Vite) + Node.js/Express (ES modules) + PostgreSQL through Prisma 6.
+Tech Stack: React (Vite) + Node.js/Express (ES modules) + PostgreSQL through Prisma 6.
 
 ## Features
 
@@ -44,16 +44,16 @@ More detail: [docs/setup-local.md](docs/setup-local.md).
 
 Password for all: `Password1`
 
-| Email | Role |
-|---|---|
-| admin@nitc.ac.in | Admin |
-| hod.cse@nitc.ac.in | HOD (CSE) |
-| faculty@nitc.ac.in | Faculty (bookings are confirmed instantly) |
-| student@nitc.ac.in | Student (bookings wait for approval) |
-| lab@nitc.ac.in | Lab in-charge |
-| maintenance@nitc.ac.in | Maintenance staff |
-| timetable@nitc.ac.in | Timetable coordinator |
-| principal@nitc.ac.in | Management (reports) |
+| Email                  | Role                                       |
+| ---------------------- | ------------------------------------------ |
+| admin@nitc.ac.in       | Admin                                      |
+| hod.cse@nitc.ac.in     | HOD (CSE)                                  |
+| faculty@nitc.ac.in     | Faculty (bookings are confirmed instantly) |
+| student@nitc.ac.in     | Student (bookings wait for approval)       |
+| lab@nitc.ac.in         | Lab in-charge                              |
+| maintenance@nitc.ac.in | Maintenance staff                          |
+| timetable@nitc.ac.in   | Timetable coordinator                      |
+| principal@nitc.ac.in   | Management (reports)                       |
 
 ## Project structure
 
@@ -77,38 +77,38 @@ smart-classroom-booking/
 
 ## Scripts (run inside `server/`)
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start the API with auto-restart |
-| `npm run db:migrate` | Create or apply migrations during development |
+| Command                  | What it does                                                |
+| ------------------------ | ----------------------------------------------------------- |
+| `npm run dev`            | Start the API with auto-restart                             |
+| `npm run db:migrate`     | Create or apply migrations during development               |
 | `npm run db:constraints` | Add the no-double-booking database rule (safe to run again) |
-| `npm run db:seed` | Demo users and rooms |
-| `npm run db:studio` | Browse the database in the browser |
+| `npm run db:seed`        | Demo users and rooms                                        |
+| `npm run db:studio`      | Browse the database in the browser                          |
 
 ## Settings (`server/.env`)
 
-| Variable | Meaning |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Long random text that signs login tokens |
-| `JWT_EXPIRES_IN` | How long a login lasts (default `1d`) |
-| `CLIENT_URL` | Address of the website (default `http://localhost:5173`) |
-| `ALLOWED_EMAIL_DOMAIN` | Domain allowed to register (default `nitc.ac.in`) |
-| `OPERATING_HOURS_PER_DAY` | Hours a room is usable per day, used for utilisation % in reports |
-| `SMTP_*` | Leave empty. Email sending is not used, see [notifications](docs/architecture.md#notifications). |
+| Variable                  | Meaning                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`            | PostgreSQL connection string                                                                     |
+| `JWT_SECRET`              | Long random text that signs login tokens                                                         |
+| `JWT_EXPIRES_IN`          | How long a login lasts (default `1d`)                                                            |
+| `CLIENT_URL`              | Address of the website (default `http://localhost:5173`)                                         |
+| `ALLOWED_EMAIL_DOMAIN`    | Domain allowed to register (default `nitc.ac.in`)                                                |
+| `OPERATING_HOURS_PER_DAY` | Hours a room is usable per day, used for utilisation % in reports                                |
+| `SMTP_*`                  | Leave empty. Email sending is not used, see [notifications](docs/architecture.md#notifications). |
 
 ## Documentation
 
-| Document | Contents |
-|---|---|
-| [docs/setup-local.md](docs/setup-local.md) | Running the project on your computer |
-| [docs/api.md](docs/api.md) | Every API endpoint |
-| [docs/architecture.md](docs/architecture.md) | System design, data model, how double booking is prevented |
-| [docs/user-guide.md](docs/user-guide.md) | What each role can do |
-| [docs/testing.md](docs/testing.md) | Test checklist |
-| [docs/srs-traceability.md](docs/srs-traceability.md) | Which code implements each SRS requirement |
+| Document                                             | Contents                                                   |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| [docs/setup-local.md](docs/setup-local.md)           | Running the project on your computer                       |
+| [docs/api.md](docs/api.md)                           | Every API endpoint                                         |
+| [docs/architecture.md](docs/architecture.md)         | System design, data model, how double booking is prevented |
+| [docs/user-guide.md](docs/user-guide.md)             | What each role can do                                      |
+| [docs/testing.md](docs/testing.md)                   | Test checklist                                             |
+| [docs/srs-traceability.md](docs/srs-traceability.md) | Which code implements each SRS requirement                 |
 
-## Policies you can change
+## Policies we can change
 
 - **Who needs approval (TBD-01):** `APPROVAL_ROLES` in `server/src/services/bookingService.js`. Default: students.
 - **Who holds which role (TBD-02):** admins change roles and departments on the Users page.
