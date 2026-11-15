@@ -1,21 +1,24 @@
-# EduSpace (Smart Classroom and Lab Booking )
+# EduSpace ( Smart Classroom and Lab Booking )
 
-A web app for searching, booking and managing classrooms and labs at NIT Calicut. It prevents double bookings, suggests alternative rooms, handles maintenance and shows utilisation reports.
+A web app for searching, booking and managing classrooms and labs at NIT Calicut. It prevents double bookings, suggests alternative rooms, routes student requests to the right reviewers, handles maintenance and shows utilisation reports.
 
-Tech Stack: React (Vite) + Node.js/Express (ES modules) + PostgreSQL through Prisma 6.
+Built from the project's [SRS](docs/SRS.pdf) (version 1.2): React (Vite) + Node.js/Express (ES modules) + PostgreSQL through Prisma 6.
 
 ## Features
 
-- Registration and login with JWT and bcrypt. Only `@nitc.ac.in` emails can sign up, and every new account starts as a student.
-- Eight roles with role-based access: student, faculty, admin, lab in-charge, HOD, timetable coordinator, maintenance staff, management.
-- Room search by date, time, room type and seats, with availability shown for the chosen slot.
-- Booking with conflict detection, first-come-first-served handling of simultaneous requests, and a database rule that makes double booking impossible.
-- Alternative room suggestions when a room is taken.
-- HOD or admin approval for student bookings, shown to the HOD of the student's department.
-- Maintenance blocks that flag affected bookings and let their owners choose a new room.
-- In-app notifications for booking events.
-- Admin pages for users, roles, departments, rooms and lab equipment.
-- Utilisation reports with Chart.js, and optional live updates over Socket.IO.
+- **Accounts and roles.** Registration and login with JWT and bcrypt. Only `@nitc.ac.in` emails can sign up, a department is required, and every new account starts as a student.
+- **Nine roles:** student, class representative, faculty, admin, lab in-charge, HOD, timetable coordinator, maintenance staff, management.
+- **Role management inside a department.** A HOD can make students faculty or class representatives. Faculty can make students class representatives. Admins manage everyone.
+- **Room search** by date, time, room type and seats, with availability, reasons and owning department shown for each room.
+- **Booking rules.** Rooms can be booked from **8:00 AM to 8:00 PM** and up to **one month ahead**, on a single day.
+- **No double booking.** Simultaneous requests are handled one at a time, and a database rule rejects overlapping confirmed bookings.
+- **Approval flow.** Students' requests need approval. Class representatives, faculty and all other roles are confirmed immediately.
+- **Department-aware approvals.** Rooms can belong to a department. Faculty, HODs and lab in-charges review requests for their own department, so an ECE student booking a CSE lab can be approved by either department.
+- **Automatic cancellation.** When one request is approved, the other pending requests for the same room and an overlapping time are cancelled automatically, and those students are told.
+- **Alternative rooms** when a room is taken, and a way to pick a new room when maintenance blocks a booking.
+- **Notifications.** A personal list ("For you") and a **campus updates** feed that every user sees (rooms booked, freed, closed for maintenance), with no personal data.
+- **Reports** with Chart.js: utilisation by room in hours or percent (the axis scales to the data), bookings by status and by department.
+- **Live updates** over Socket.IO, so pages refresh without reloading.
 
 ## Quick start (Windows, PowerShell)
 
@@ -44,23 +47,26 @@ More detail: [docs/setup-local.md](docs/setup-local.md).
 
 Password for all: `Password1`
 
-| Email                  | Role                                       |
-| ---------------------- | ------------------------------------------ |
-| admin@nitc.ac.in       | Admin                                      |
-| hod.cse@nitc.ac.in     | HOD (CSE)                                  |
-| faculty@nitc.ac.in     | Faculty (bookings are confirmed instantly) |
-| student@nitc.ac.in     | Student (bookings wait for approval)       |
-| lab@nitc.ac.in         | Lab in-charge                              |
-| maintenance@nitc.ac.in | Maintenance staff                          |
-| timetable@nitc.ac.in   | Timetable coordinator                      |
-| principal@nitc.ac.in   | Management (reports)                       |
+| Email                  | Role                                                            |
+| ---------------------- | --------------------------------------------------------------- |
+| admin@nitc.ac.in       | Admin                                                           |
+| hod.cse@nitc.ac.in     | HOD (CSE)                                                       |
+| faculty@nitc.ac.in     | Faculty (CSE)                                                   |
+| student@nitc.ac.in     | Student (CSE). Bookings wait for approval.                      |
+| cr@nitc.ac.in          | Class representative (CSE). Bookings are confirmed immediately. |
+| lab@nitc.ac.in         | Lab in-charge (CSE)                                             |
+| maintenance@nitc.ac.in | Maintenance staff                                               |
+| timetable@nitc.ac.in   | Timetable coordinator                                           |
+| principal@nitc.ac.in   | Management (reports)                                            |
+
+The seed can also create `ece.student@nitc.ac.in` and `hod.ece@nitc.ac.in` for trying cross-department approvals. If your seed file does not list them, register an ECE student and ask an admin to make another account an ECE HOD.
 
 ## Project structure
 
 ```
 smart-classroom-booking/
 ├── README.md
-├── docs/                    guides, API reference, SRS
+├── docs/                    guides, API reference, SRS (Word and PDF)
 ├── client/                  React app (Vite)
 │   └── src/ api, components, context, pages, utils
 └── server/
@@ -72,7 +78,7 @@ smart-classroom-booking/
         ├── routes/          one file per area
         ├── services/        booking, availability, maintenance, notification, report, auth
         ├── validators/      zod schemas
-        └── utils/
+        └── utils/           helpers (booking hours and window rules live here)
 ```
 
 ## Scripts (run inside `server/`)
@@ -87,29 +93,39 @@ smart-classroom-booking/
 
 ## Settings (`server/.env`)
 
-| Variable                  | Meaning                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`            | PostgreSQL connection string                                                                     |
-| `JWT_SECRET`              | Long random text that signs login tokens                                                         |
-| `JWT_EXPIRES_IN`          | How long a login lasts (default `1d`)                                                            |
-| `CLIENT_URL`              | Address of the website (default `http://localhost:5173`)                                         |
-| `ALLOWED_EMAIL_DOMAIN`    | Domain allowed to register (default `nitc.ac.in`)                                                |
-| `OPERATING_HOURS_PER_DAY` | Hours a room is usable per day, used for utilisation % in reports                                |
-| `SMTP_*`                  | Leave empty. Email sending is not used, see [notifications](docs/architecture.md#notifications). |
+| Variable                  | Meaning                                                                                         |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`            | PostgreSQL connection string                                                                    |
+| `JWT_SECRET`              | Long random text that signs login tokens                                                        |
+| `JWT_EXPIRES_IN`          | How long a login lasts (default `1d`)                                                           |
+| `CLIENT_URL`              | Address of the website (default `http://localhost:5173`)                                        |
+| `ALLOWED_EMAIL_DOMAIN`    | Domain allowed to register (default `nitc.ac.in`)                                               |
+| `OPERATING_HOURS_PER_DAY` | Optional. Hours a room is open per day, for utilisation %. Default 12.                          |
+| `SMTP_*`                  | Leave empty. Email sending is not used, see [architecture](docs/architecture.md#notifications). |
+
+## Rules at a glance
+
+| Rule                                                                | Where to change it                                                                  |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Opening hours (8:00 AM to 8:00 PM) and the one-month window         | `server/src/utils/helpers.js` (`OPEN_MINUTES`, `CLOSE_MINUTES`, `MAX_MONTHS_AHEAD`) |
+| Who needs approval (default: students)                              | `APPROVAL_ROLES` in `server/src/services/bookingService.js`                         |
+| Which department may approve (default: the student's or the room's) | `REVIEW_BY` in `server/src/services/bookingService.js`                              |
+| Roles a HOD or faculty may hand out                                 | `MANAGEABLE_ROLES` in `server/src/routes/userRoutes.js`                             |
 
 ## Documentation
 
-| Document                                             | Contents                                                   |
-| ---------------------------------------------------- | ---------------------------------------------------------- |
-| [docs/setup-local.md](docs/setup-local.md)           | Running the project on your computer                       |
-| [docs/api.md](docs/api.md)                           | Every API endpoint                                         |
-| [docs/architecture.md](docs/architecture.md)         | System design, data model, how double booking is prevented |
-| [docs/user-guide.md](docs/user-guide.md)             | What each role can do                                      |
-| [docs/testing.md](docs/testing.md)                   | Test checklist                                             |
-| [docs/srs-traceability.md](docs/srs-traceability.md) | Which code implements each SRS requirement                 |
+| Document                                                     | Contents                                                                         |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| [docs/SRS.pdf](docs/SRS.pdf), [docs/SRS.docx](docs/SRS.docx) | The Software Requirements Specification, version 1.2 (PDF to read, Word to edit) |
+| [docs/setup-local.md](docs/setup-local.md)                   | Running the project on your computer                                             |
+| [docs/api.md](docs/api.md)                                   | Every API endpoint                                                               |
+| [docs/architecture.md](docs/architecture.md)                 | System design, data model, booking rules, approvals                              |
+| [docs/user-guide.md](docs/user-guide.md)                     | What each role can do                                                            |
+| [docs/testing.md](docs/testing.md)                           | Test checklist                                                                   |
+| [docs/srs-traceability.md](docs/srs-traceability.md)         | Which code implements each SRS requirement                                       |
 
-## Policies we can change
+## Before you start using it for real
 
-- **Who needs approval (TBD-01):** `APPROVAL_ROLES` in `server/src/services/bookingService.js`. Default: students.
-- **Who holds which role (TBD-02):** admins change roles and departments on the Users page.
-- **Data retention (TBD-05):** booking history is kept until the institution decides otherwise.
+- Set a **department** for every HOD, faculty member and lab in-charge, and for every room you want a department to own (Users and Rooms pages). Reviewers without a department see no requests.
+- Keep `.env` out of Git.
+- Decide the open policy questions listed in Appendix C of the SRS (data retention, email, accessibility).

@@ -45,7 +45,7 @@ npm run dev
 
 Check http://localhost:5000/api/health. You should see `{"status":"ok", ...}`.
 
-If you already have a `users` table from an earlier step, `migrate dev` adds the new tables to it.
+When you pull changes that edit `prisma/schema.prisma`, run `npx prisma migrate dev` again (and `npx prisma generate` if the server complains about the Prisma client).
 
 ## 4. Frontend
 
@@ -59,12 +59,18 @@ npm run dev
 
 Open http://localhost:5173 and log in with `admin@nitc.ac.in` and `Password1`.
 
-## 5. Useful tools
+## 5. First things to set up
+
+1. **Rooms page (as admin).** Set the **owning department** of each lab (for example `CSE` for the CS labs). Leave shared lecture halls empty.
+2. **Users page (as admin).** Check that every HOD, faculty member and lab in-charge has a department. Reviewers without one see no requests.
+3. Try a booking as a student and approve it as the HOD or faculty member.
+
+## 6. Useful tools
 
 | Goal | How |
 |---|---|
 | Look at the data | `npx prisma studio` (opens http://localhost:5555) or pgAdmin |
-| Remove all bookings and notifications | In psql: `TRUNCATE bookings, notifications RESTART IDENTITY;` |
+| Remove all bookings and notifications | In psql: `TRUNCATE bookings, notifications, broadcasts RESTART IDENTITY;` |
 | Remove only past bookings | `DELETE FROM bookings WHERE end_time < NOW();` |
 | Wipe everything and start over | `npx prisma migrate reset`, then `npm run db:constraints` and `npm run db:seed` |
 
@@ -80,3 +86,6 @@ Open http://localhost:5173 and log in with `admin@nitc.ac.in` and `Password1`.
 | `Cannot find module ... .js` | A relative import is missing its `.js` ending (the project uses ES modules) |
 | Login works but pages show 401 | Clear the saved token: in the browser console run `localStorage.clear()` |
 | Registration says "Department is required" | Fill in the department field. It is mandatory. |
+| A booking says it must be between 8:00 AM and 8:00 PM | That is the booking rule. Pick a time inside opening hours. |
+| A faculty member's Approvals page is empty | Their account has no department, or no student request matches their department or rooms |
+| `prisma.broadcast is undefined` | Run `npx prisma migrate dev` and `npx prisma generate`, then restart the server |
