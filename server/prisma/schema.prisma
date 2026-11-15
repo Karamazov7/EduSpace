@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   STUDENT
+  CLASS_REPRESENTATIVE
   FACULTY
   ADMIN
   LAB_INCHARGE
@@ -74,6 +75,7 @@ model Room {
   type        RoomType
   capacity    Int
   building    String?
+  department  String?
   facilities  String[]
   status      RoomStatus @default(OPERATIONAL)
   isActive    Boolean    @default(true)
@@ -154,4 +156,15 @@ model Notification {
 
   @@index([userId])
   @@map("notifications")
+}
+
+model Broadcast {
+  id        Int      @id @default(autoincrement())
+  type      String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("broadcasts")
 }

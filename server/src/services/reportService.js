@@ -1,11 +1,12 @@
 import prisma from '../config/prisma.js';
 import AppError from '../utils/AppError.js';
+import { OPEN_MINUTES, CLOSE_MINUTES } from '../utils/helpers.js';
 
 // FR-052: utilisation = confirmed hours / (days in range x operating hours per day).
 export async function utilization(from, to) {
   if (!(to > from)) throw new AppError(400, 'End date must be after start date');
   const days = Math.max(1, Math.ceil((to - from) / 86400000));
-  const hoursPerDay = Number(process.env.OPERATING_HOURS_PER_DAY) || 10;
+  const hoursPerDay = Number(process.env.OPERATING_HOURS_PER_DAY) || (CLOSE_MINUTES - OPEN_MINUTES) / 60;
   const capacityHours = days * hoursPerDay;
 
   const [rooms, confirmed, byStatus] = await Promise.all([

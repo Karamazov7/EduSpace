@@ -1,4 +1,0 @@
-0. implement email notifications
-1. update readme.md file
-2. ask for deployment
-3. prepare docs

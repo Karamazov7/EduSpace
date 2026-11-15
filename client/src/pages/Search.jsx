@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api from '../api/axios.js';
 import { useRefreshOnChange } from '../api/socket.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -12,6 +12,9 @@ export default function Search() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [selected, setSelected] = useState(null);
+  // Opening hours and the latest bookable date come from the server, so both sides always agree.
+  const [rules, setRules] = useState({ openTime: '08:00', closeTime: '20:00', latestDate: '' });
+  useEffect(() => { api.get('/config').then((res) => setRules(res.data.booking)).catch(() => {}); }, []);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const slot = () => ({ start: toISO(form.date, form.startTime), end: toISO(form.date, form.endTime) });
@@ -19,6 +22,12 @@ export default function Search() {
   const search = useCallback(async () => {
     setError('');
     if (form.endTime <= form.startTime) return setError('End time must be after start time.');
+    if (form.startTime < rules.openTime || form.endTime > rules.closeTime) {
+      return setError('Rooms can only be booked between 8:00 AM and 8:00 PM.');
+    }
+    if (rules.latestDate && form.date > rules.latestDate) {
+      return setError(`Rooms can only be booked up to one month ahead (until ${rules.latestDate}).`);
+    }
     try {
       const params = { ...slot() };
       if (form.type) params.type = form.type;
@@ -29,7 +38,7 @@ export default function Search() {
       setError(errMsg(err));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form]);
+  }, [form, rules]);
 
   useRefreshOnChange(() => { if (rooms) search(); });
 
@@ -40,13 +49,16 @@ export default function Search() {
   return (
     <>
       <div className="page-head"><h1>Find a room</h1></div>
+      <p className="muted">
+        Rooms can be booked from 8:00 AM to 8:00 PM, up to one month ahead{rules.latestDate ? ` (until ${rules.latestDate})` : ''}.
+      </p>
       <form className="panel form-grid" onSubmit={onSubmit}>
         <div className="field"><label htmlFor="date">Date</label>
-          <input id="date" type="date" min={todayStr()} value={form.date} onChange={set('date')} required /></div>
+          <input id="date" type="date" min={todayStr()} max={rules.latestDate || undefined} value={form.date} onChange={set('date')} required /></div>
         <div className="field"><label htmlFor="st">Start time</label>
-          <input id="st" type="time" value={form.startTime} onChange={set('startTime')} required /></div>
+          <input id="st" type="time" min={rules.openTime} max={rules.closeTime} value={form.startTime} onChange={set('startTime')} required /></div>
         <div className="field"><label htmlFor="et">End time</label>
-          <input id="et" type="time" value={form.endTime} onChange={set('endTime')} required /></div>
+          <input id="et" type="time" min={rules.openTime} max={rules.closeTime} value={form.endTime} onChange={set('endTime')} required /></div>
         <div className="field"><label htmlFor="type">Room type</label>
           <select id="type" value={form.type} onChange={set('type')}>
             <option value="">Classroom or lab</option>
@@ -93,7 +105,7 @@ export default function Search() {
             setNotice(
               b.status === 'CONFIRMED'
                 ? `Booked ${b.room.name}, ${fmtRange(b.startTime, b.endTime)}. A confirmation email is on its way.`
-                : `Request sent for ${b.room.name}, ${fmtRange(b.startTime, b.endTime)}. You will be notified when your HOD or an admin decides.`
+                : `Request sent for ${b.room.name}, ${fmtRange(b.startTime, b.endTime)}. You can check the Notifications page once a faculty member, a HOD or an admin has decided.`
             );
             search();
           }}
@@ -113,6 +125,7 @@ function RoomRow({ room, onBook }) {
           <span>{label(room.type)}</span>
           <span>{room.capacity} seats</span>
           {room.building && <span>{room.building}</span>}
+          {room.department && <span>{room.department} department</span>}
           {room.facilities.length > 0 && <span>{room.facilities.join(', ')}</span>}
           {room.equipment.length > 0 && (
             <span>{room.equipment.length} equipment types{faulty > 0 ? `, ${faulty} unavailable` : ''}</span>
@@ -149,6 +162,9 @@ function BookingModal({ room, form, slot, onClose, onBooked }) {
   return (
     <Modal title={`Book ${room.name}`} onClose={onClose}>
       <p className="muted">{fmtRange(slot.start, slot.end)}</p>
+      {user.role === 'STUDENT' && room.department && room.department !== user.department && (
+        <div className="alert info">This room belongs to the {room.department} department. Faculty or the HOD of {room.department} (or of your own department) can approve your request.</div>
+      )}
       {error && <div className="alert error" role="alert">{error}</div>}
       <form onSubmit={(e) => { e.preventDefault(); submit(room.id); }}>
         <div className="field"><label>College ID</label><input value={user.collegeId} readOnly /></div>

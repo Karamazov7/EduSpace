@@ -1,7 +1,7 @@
 import prisma from '../config/prisma.js';
 import AppError from '../utils/AppError.js';
 import { lockRoom } from './availabilityService.js';
-import { notifySafe } from './notificationService.js';
+import { notifySafe, broadcastSafe } from './notificationService.js';
 import { broadcast } from '../config/socket.js';
 import { formatIST } from '../utils/helpers.js';
 
@@ -42,16 +42,18 @@ export async function createBlock(user, { roomId, reason, startDate, endDate }) 
       `${room.name} is blocked for maintenance (${reason}). Your booking on ${formatIST(b.startTime)} needs a new room. Open "My bookings" to pick an alternative.`
     );
   }
+  broadcastSafe('ROOM_BLOCKED', 'Room closed for maintenance', `${room.name} is closed for maintenance from ${formatIST(startDate)} until ${formatIST(endDate)}.`);
   broadcast('availability:changed');
   return { block, affectedCount: affected.length };
 }
 
 // FR-042
 export async function completeBlock(id) {
-  const block = await prisma.maintenanceBlock.findUnique({ where: { id } });
+  const block = await prisma.maintenanceBlock.findUnique({ where: { id }, include: { room: { select: { name: true } } } });
   if (!block) throw new AppError(404, 'Maintenance record not found');
   if (block.completedAt) throw new AppError(409, 'This maintenance is already marked complete');
   const updated = await prisma.maintenanceBlock.update({ where: { id }, data: { completedAt: new Date() } });
+  broadcastSafe('ROOM_AVAILABLE', 'Room available again', `${block.room.name} is available for booking again.`);
   broadcast('availability:changed');
   return updated;
 }

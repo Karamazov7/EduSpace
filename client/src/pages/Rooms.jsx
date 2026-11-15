@@ -11,8 +11,11 @@ export default function Rooms() {
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null); // room object, or {} for new
   const [equipmentFor, setEquipmentFor] = useState(null);
-  const canEdit = ['ADMIN', 'LAB_INCHARGE'].includes(user.role);
-  const canTouch = (room) => canEdit && !(user.role === 'LAB_INCHARGE' && room.type !== 'LAB');
+  const canAdd = ['ADMIN', 'LAB_INCHARGE'].includes(user.role);
+  // Admins manage every room. A lab in-charge manages only labs owned by their own department.
+  const canTouch = (room) =>
+    user.role === 'ADMIN' ||
+    (user.role === 'LAB_INCHARGE' && room.type === 'LAB' && Boolean(user.department) && room.department === user.department);
 
   const load = useCallback(async () => {
     try {
@@ -38,18 +41,27 @@ export default function Rooms() {
     <>
       <div className="page-head">
         <h1>Rooms and labs</h1>
-        {canEdit && <button className="btn" onClick={() => setEditing({})}>Add room</button>}
+        {canAdd && <button className="btn" onClick={() => setEditing({})}>Add room</button>}
       </div>
+      {user.role === 'ADMIN' && rooms?.some((r) => !r.department) && (
+        <div className="alert info">
+          Rooms with no department are treated as shared. Set the owning department on each lab so its own department can approve bookings for it.
+        </div>
+      )}
+      {user.role === 'LAB_INCHARGE' && !user.department && (
+        <div className="alert error">Your account has no department yet, so you cannot manage labs. Ask an admin to set it.</div>
+      )}
       {error && <div className="alert error" role="alert">{error}</div>}
       {rooms && (
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Name</th><th>Type</th><th>Seats</th><th>Facilities</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Type</th><th>Department</th><th>Seats</th><th>Facilities</th><th>Status</th><th></th></tr></thead>
             <tbody>
               {rooms.map((r) => (
                 <tr key={r.id} style={r.isActive ? undefined : { opacity: 0.6 }}>
                   <td><strong>{r.name}</strong><br /><small>{r.building}</small></td>
                   <td>{label(r.type)}</td>
+                  <td>{r.department || <span className="muted">Shared</span>}</td>
                   <td>{r.capacity}</td>
                   <td>{r.facilities.join(', ') || '-'}</td>
                   <td>
@@ -82,11 +94,13 @@ export default function Rooms() {
 
 function RoomForm({ room, user, onClose, onSaved }) {
   const isNew = !room.id;
+  const isLabIncharge = user.role === 'LAB_INCHARGE';
   const [form, setForm] = useState({
     name: room.name || '',
-    type: room.type || (user.role === 'LAB_INCHARGE' ? 'LAB' : 'CLASSROOM'),
+    type: room.type || (isLabIncharge ? 'LAB' : 'CLASSROOM'),
     capacity: room.capacity || '',
     building: room.building || '',
+    department: isLabIncharge ? user.department || '' : room.department || '',
     facilities: (room.facilities || []).join(', '),
   });
   const [error, setError] = useState('');
@@ -99,6 +113,7 @@ function RoomForm({ room, user, onClose, onSaved }) {
     const body = {
       ...form,
       capacity: Number(form.capacity),
+      department: form.department.trim() || null,
       facilities: form.facilities.split(',').map((s) => s.trim()).filter(Boolean),
     };
     try {
@@ -117,9 +132,12 @@ function RoomForm({ room, user, onClose, onSaved }) {
       <form onSubmit={submit}>
         <div className="field"><label htmlFor="rn">Name</label><input id="rn" value={form.name} onChange={set('name')} required /></div>
         <div className="field"><label htmlFor="rt">Type</label>
-          <select id="rt" value={form.type} onChange={set('type')} disabled={user.role === 'LAB_INCHARGE'}>
+          <select id="rt" value={form.type} onChange={set('type')} disabled={isLabIncharge}>
             <option value="CLASSROOM">Classroom</option><option value="LAB">Lab</option>
           </select></div>
+        <div className="field"><label htmlFor="rd">Owning department</label>
+          <input id="rd" value={form.department} onChange={set('department')} placeholder="e.g. CSE" readOnly={isLabIncharge} />
+          <small>{isLabIncharge ? 'New labs belong to your department.' : 'Leave empty for a shared room such as a central lecture hall.'}</small></div>
         <div className="field"><label htmlFor="rc">Seats</label><input id="rc" type="number" min="1" value={form.capacity} onChange={set('capacity')} required /></div>
         <div className="field"><label htmlFor="rb">Building</label><input id="rb" value={form.building} onChange={set('building')} /></div>
         <div className="field"><label htmlFor="rf">Facilities</label><input id="rf" value={form.facilities} onChange={set('facilities')} placeholder="Projector, Whiteboard" />

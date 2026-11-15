@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const ROLES = [
   "STUDENT",
+  "CLASS_REPRESENTATIVE",
   "FACULTY",
   "ADMIN",
   "LAB_INCHARGE",
@@ -19,6 +20,14 @@ const roomBase = z.object({
   type: z.enum(["CLASSROOM", "LAB"]),
   capacity: int(1, 1000),
   building: z.string().trim().max(100).optional(),
+  department: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .max(100)
+    .transform((v) => v || null)
+    .nullable()
+    .optional(),
   facilities: z.array(z.string().trim().min(1).max(50)).max(30).optional(),
   status: z.enum(["OPERATIONAL", "NON_OPERATIONAL"]).optional(),
 });
@@ -77,4 +86,8 @@ export const userUpdateSchema = z.object({
 export const reportSchema = z.object({
   from: z.coerce.date(),
   to: z.coerce.date(),
+});
+
+export const roleChangeSchema = z.object({
+  role: z.enum(["STUDENT", "CLASS_REPRESENTATIVE", "FACULTY"]),
 });

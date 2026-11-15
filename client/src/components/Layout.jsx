@@ -5,7 +5,12 @@ import { label } from "../utils/format.js";
 const LINKS = [
   { to: "/", text: "Find a room", end: true },
   { to: "/bookings", text: "My bookings" },
-  { to: "/approvals", text: "Approvals", roles: ["HOD", "ADMIN"] },
+  {
+    to: "/approvals",
+    text: "Approvals",
+    roles: ["HOD", "FACULTY", "LAB_INCHARGE", "ADMIN"],
+  },
+  { to: "/department", text: "My department", roles: ["HOD", "FACULTY"] },
   {
     to: "/rooms",
     text: "Rooms",
