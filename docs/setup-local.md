@@ -89,3 +89,6 @@ Open http://localhost:5173 and log in with `admin@nitc.ac.in` and `Password1`.
 | A booking says it must be between 8:00 AM and 8:00 PM | That is the booking rule. Pick a time inside opening hours. |
 | A faculty member's Approvals page is empty | Their account has no department, or no student request matches their department or rooms |
 | `prisma.broadcast is undefined` | Run `npx prisma migrate dev` and `npx prisma generate`, then restart the server |
+| `EPERM: operation not permitted, rename ... query_engine-windows.dll.node` | Windows has the Prisma engine file locked. Stop the server (`Ctrl+C`), Prisma Studio and any other Node process (`taskkill /F /IM node.exe`), then run `npx prisma generate` again. If it persists, delete `server\node_modules\.prisma`, close VS Code, run `npx prisma generate`, and consider excluding the project folder from antivirus or moving it out of `Downloads`. |
+| Password reset link opens the wrong address | Set `CLIENT_URL` in `server/.env` to the address you use for the site, and restart the server |
+| Do not upgrade Prisma when it says a new major version is available | The project uses Prisma 6. Ignore the update box. |

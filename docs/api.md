@@ -4,7 +4,7 @@ Base path: `/api`. Requests and responses are JSON.
 
 ## Conventions
 
-- Send the login token as `Authorization: Bearer <token>`. Every endpoint needs it except register, login, health and config.
+- Send the login token as `Authorization: Bearer <token>`. Every endpoint needs it except register, login, forgot-password, reset-password, health and config.
 - Times are ISO 8601 in UTC, for example `2026-11-20T04:30:00.000Z`. Booking hours and the booking window are checked in Indian Standard Time.
 - Errors look like `{ "message": "..." }`. Validation errors add `"details": [{ "field": "...", "message": "..." }]`.
 
@@ -40,6 +40,8 @@ Base path: `/api`. Requests and responses are JSON.
 | `POST /auth/register` | `collegeId`, `name`, `email` (must end in `@nitc.ac.in`), `password` (8 to 72 characters, with a letter and a number), `department` (required, stored in capitals) | `201` with the new user. Every new account is a student, and any `role` sent is ignored. |
 | `POST /auth/login` | `email`, `password` | `{ token, user }` |
 | `GET /auth/me` | none | `{ user }` |
+| `POST /auth/forgot-password` | `email`, `collegeId` | `200` with the same message every time, whether or not the details match an account. A request is recorded only when both match an active account. |
+| `POST /auth/reset-password` | `token` (from the reset link), `password` (same rules as registration) | `200` when the password was changed. `400` if the link is invalid, expired or already used. |
 
 ## Rooms
 
@@ -121,6 +123,9 @@ Roles: admin, lab in-charge, maintenance staff.
 |---|---|
 | `GET /users?q=` | Search by name, email or college ID (max 200 results) |
 | `PATCH /users/:id` | `role`, `isActive`, `department` (send `null` to clear it). You cannot demote or deactivate yourself. |
+| `GET /users/reset-requests` | People who asked for a password reset and are waiting for a link, oldest first |
+| `POST /users/:id/reset-link` | Creates a one-time reset link for an active account, with or without a request. Returns `{ link, expiresAt, user }`. The link is shown only in this response. Any older unused link for that person stops working. |
+| `POST /users/reset-requests/:rid/close` | Dismisses a waiting request. `204`. |
 
 ### HOD and faculty (their own department only)
 
@@ -135,6 +140,21 @@ Roles: admin, lab in-charge, maintenance staff.
 | Faculty | student, class representative |
 
 Nobody can change their own role, someone in another department, or a person who holds any other role.
+
+## Password reset (forgot password)
+
+There is no email. An administrator hands the user a one-time link.
+
+1. The user sends `POST /auth/forgot-password` with their email and college ID. The answer is always the same, so the form cannot be used to find out who has an account.
+2. If both details match an active account, a request is recorded and administrators get a notification.
+3. An administrator calls `POST /users/:id/reset-link` and gives the link to the person.
+4. The user opens `<CLIENT_URL>/reset-password?token=...` and sends `POST /auth/reset-password`.
+
+About the link:
+- The token is 64 random characters. Only its SHA-256 hash is stored.
+- It works once and expires after 24 hours. A newer link replaces an older one.
+- After a successful reset, every login token issued before it is refused with `401` ("Your password was changed. Please log in again.").
+- The user is notified that the password was changed.
 
 ## Notifications and reports
 

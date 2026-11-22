@@ -75,6 +75,11 @@ Where each functional requirement of the [SRS](SRS.pdf) (version 1.2) is impleme
 | FR-069 | Department rule for reviewing | `canReview`, `reviewableBy` in `bookingService.js` |
 | FR-070 | Review policy is one setting | `REVIEW_BY` in `bookingService.js` |
 | FR-071 | Dynamic utilisation chart | `pages/Reports.jsx` (axis scaling, value labels, hours or percent), `services/reportService.js` |
+| FR-072 | Request a password reset with email and college ID, with an identical answer for every input | `POST /auth/forgot-password` in `routes/authRoutes.js`, `requestReset` in `services/passwordResetService.js`, `pages/ForgotPassword.jsx`, link on `pages/Login.jsx` |
+| FR-073 | Administrators are notified of and can list reset requests | `requestReset` (notification `PASSWORD_RESET_REQUESTED`), `GET /users/reset-requests`, box on `pages/Users.jsx` |
+| FR-074 | Administrator creates a one-time, 24-hour reset link, stored only as a hash | `issueLink` in `services/passwordResetService.js`, `POST /users/:id/reset-link` in `routes/userRoutes.js`, link window in `pages/Users.jsx`, `PasswordReset` model |
+| FR-075 | A valid link sets a new password once | `resetPassword` in `services/passwordResetService.js`, `POST /auth/reset-password`, `pages/ResetPassword.jsx`, `passwordRule` in `validators/authValidators.js` |
+| FR-076 | Older logins stop working after a reset, and the user is notified | `passwordChangedAt` check in `middleware/authenticate.js`, notification `PASSWORD_CHANGED` |
 
 ## Non-functional requirements and business rules
 
@@ -97,7 +102,7 @@ Where each functional requirement of the [SRS](SRS.pdf) (version 1.2) is impleme
 | TBD-01 approval | Students need approval. All other roles, including class representatives, are confirmed after the conflict check. |
 | TBD-02 role permissions | Defined in Appendix D of the SRS and in the route files. |
 | TBD-03 API and schema | See [api.md](api.md) and `prisma/schema.prisma`. |
-| TBD-04 email | Not used. Optional and off by default (FR-068). |
+| TBD-04 email | Not used. Optional and off by default (FR-068). Password reset links are handed over by an administrator instead of emailed. |
 | TBD-05 data retention | Open. Bookings are kept indefinitely. |
 | TBD-06 languages, accessibility, time zone | English. Times stored in UTC, rules evaluated in IST. Accessibility target open. |
 | TBD-07 room data ownership | Admins and lab in-charges maintain rooms. Each room can have an owning department. |
@@ -110,4 +115,4 @@ Where each functional requirement of the [SRS](SRS.pdf) (version 1.2) is impleme
 - Email delivery of notifications as the default (see FR-068).
 - Integration with an institutional timetable system, door locks or access control (out of scope in the SRS).
 - Security staff access (listed as TBD in the SRS).
-- Email verification at sign-up, login rate limiting, and JWT refresh and revocation.
+- Email verification at sign-up, login and reset-request rate limiting, a "change password" page for logged-in users, password reset links issued by HODs, and JWT refresh and revocation.

@@ -29,6 +29,25 @@ For a harder test, send the same `POST /api/bookings` request many times at once
 | Student opens `/users`, `/approvals` or `/department` | Redirected home. The API returns 403. |
 | Admin deactivates a user | Their login fails, and their old token stops working at once |
 
+### Forgot password
+
+| Test | Expected |
+|---|---|
+| Request a reset with a correct email and college ID | A neutral message, and the admin gets a notification |
+| Request with a wrong college ID, an unknown email or a deactivated account | The same neutral message, and nothing is recorded |
+| Request twice in a row | Only one request waits for the admin |
+| Admin opens Users | The waiting request appears at the top |
+| A student or faculty member calls the admin reset endpoints | 403 |
+| Admin presses Create reset link | A link is shown once, built from `CLIENT_URL` |
+| Open the link and set a weak password such as `abc` | Refused, with the reasons |
+| Open the link and set a valid new password | Password changed, and the user is notified |
+| Log in with the old password, then the new one | The old one fails, the new one works |
+| Open the same link a second time | "Invalid or has expired" |
+| Create two links for one person, then use the older one | Refused. Only the newest works. |
+| A user is logged in on another browser while an admin resets their password | After the reset, that old session is sent back to the login page |
+| Use a link after 24 hours | Refused |
+| Admin dismisses a request | It disappears from the list |
+
 ### Role changes inside a department
 
 | Test | Expected |

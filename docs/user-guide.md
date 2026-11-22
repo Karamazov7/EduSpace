@@ -11,6 +11,8 @@
 
 **Create an account.** Choose "Create an account" on the login page. Use your `@nitc.ac.in` email, your college ID and your department's short code (for example CSE). Every new account starts as a student. Faculty and class representatives are appointed afterwards (see the roles below).
 
+**Forgot your password?** On the login page press **Forgot your password?** and enter your institute email and college ID. An administrator is asked to send you a reset link. Ask the administrator for it (in person is best). Open the link, type a new password twice and log in. The link works once and expires after 24 hours. If it has expired, request a new one. After you change your password you are logged out everywhere else.
+
 **Find and book a room.**
 1. Open **Find a room**. Choose the date, start time and end time, and optionally the room type and the number of seats you need.
 2. Press **Search rooms**. Free rooms are listed first. Rooms that are taken, blocked for maintenance or out of service are listed below, with the reason. Each room shows the department it belongs to, if any.
@@ -80,6 +82,7 @@ Choose a date range and press **Update report**.
 ## Administrator
 
 - **Users**: search people, change their **role** and **department**, and deactivate accounts. After a role change, ask the person to refresh the page.
+- **Password resets**: when someone asks for a reset, a box at the top of **Users** lists them. Press **Create reset link**, copy the link and give it to that person directly (not in a group chat, because anyone holding it can set the password). The link is shown once. You can also press **Reset link** on any user's row without a request. Creating a new link cancels the older one.
 - **Rooms**: add, edit, deactivate and reactivate any room. Set the **owning department** of each lab so that its department can approve bookings for it.
 - **Approvals**: review any request.
 - **Maintenance** and **Reports**: as above.

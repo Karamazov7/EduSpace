@@ -32,6 +32,7 @@ erDiagram
   User ||--o{ Booking : reviews
   User ||--o{ MaintenanceBlock : creates
   User ||--o{ Notification : receives
+  User ||--o{ PasswordReset : resets
   Room ||--o{ Booking : has
   Room ||--o{ Equipment : contains
   Room ||--o{ MaintenanceBlock : has
@@ -42,6 +43,7 @@ erDiagram
     string role
     string department
     boolean isActive
+    datetime passwordChangedAt
   }
   Room {
     int id
@@ -77,6 +79,13 @@ erDiagram
     string type
     string subject
     string status
+  }
+  PasswordReset {
+    int id
+    string status
+    string tokenHash
+    datetime expiresAt
+    datetime usedAt
   }
   Broadcast {
     int id
@@ -187,6 +196,27 @@ Self-registration always creates a student. Roles are then granted by:
 
 Nobody changes their own role. A lab in-charge manages only labs owned by their own department, and admins manage all rooms.
 
+## Password reset
+
+Because the app does not send email, a forgotten password is fixed with the help of an administrator:
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant API as Server
+  participant A as Administrator
+  U->>API: POST /auth/forgot-password (email, college ID)
+  API-->>U: the same message every time
+  API->>A: in-app notification, only if the details match
+  A->>API: POST /users/:id/reset-link
+  API-->>A: one-time link, shown once
+  A->>U: gives the link in person or directly
+  U->>API: POST /auth/reset-password (token, new password)
+  API-->>U: password changed
+```
+
+`PasswordReset` rows move through `REQUESTED`, `ISSUED`, `USED` and `CLOSED`. The link's token is random, only its SHA-256 hash is stored, and it works once for 24 hours (`LINK_VALID_HOURS` in `passwordResetService.js`). When the link is used, the service first claims the row inside a transaction, so two simultaneous uses cannot both succeed. It then saves the new password hash and sets `User.passwordChangedAt`. The `authenticate` middleware refuses any login token issued before that time, so old sessions end.
+
 ## Maintenance rule
 
 A maintenance block keeps its room unavailable from its start date until staff press "Mark room available" (FR-041). Creating a block finds the bookings that overlap the planned period, marks them `AFFECTED`, releases their slots, notifies the owners and lets them choose a replacement room.
@@ -195,7 +225,7 @@ A maintenance block keeps its room unavailable from its start date until staff p
 
 There are two kinds, both shown on the **Notifications** page:
 
-- **For you.** A row per person in the `notifications` table (FR-046): booking confirmed or sent for approval, approved or rejected, cancelled (including automatic cancellation), changed, affected by maintenance, and, for reviewers, a request waiting for them.
+- **For you.** A row per person in the `notifications` table (FR-046): booking confirmed or sent for approval, approved or rejected, cancelled (including automatic cancellation), changed, affected by maintenance, and, for reviewers, a request waiting for them. Administrators also get a notification when someone asks for a password reset, and a user is told when their password was changed.
 - **Campus updates.** One shared row per event in the `broadcasts` table (FR-066): a room was booked, is free again, was closed for maintenance or reopened. It shows only the room and the time, never the person or the purpose, and lists the last 30 days.
 
 Open pages refresh by themselves through Socket.IO.
@@ -216,5 +246,6 @@ Email sending is not used in this version. The code only tries to send an email 
 | Sign-up | Only `@nitc.ac.in` addresses, always as a student, with a department. Other roles are granted by admins, HODs or faculty within their limits. |
 | Input | Every request body and query is validated with zod. Unknown fields are dropped. |
 | Login errors | The same message for a wrong email and a wrong password |
+| Password reset | The forgot-password form answers the same way for every input. Links are random, one-time, expire after 24 hours and are stored only as hashes. A reset ends all older logins. |
 | Privacy | Campus updates carry no names or purposes. Socket.IO events carry no data. |
 | Secrets | `.env` must never be committed to Git |
