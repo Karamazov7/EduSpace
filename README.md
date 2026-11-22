@@ -1,4 +1,4 @@
-# Smart Classroom and Lab Booking
+# EduSpace ( Smart Classroom and Lab Booking )
 
 A web app for searching, booking and managing classrooms and labs at NIT Calicut. It prevents double bookings, suggests alternative rooms, routes student requests to the right reviewers, handles maintenance and shows utilisation reports.
 
@@ -48,17 +48,17 @@ More detail: [docs/setup-local.md](docs/setup-local.md).
 
 Password for all: `Password1`
 
-| Email | Role |
-|---|---|
-| admin@nitc.ac.in | Admin |
-| hod.cse@nitc.ac.in | HOD (CSE) |
-| faculty@nitc.ac.in | Faculty (CSE) |
-| student@nitc.ac.in | Student (CSE). Bookings wait for approval. |
-| cr@nitc.ac.in | Class representative (CSE). Bookings are confirmed immediately. |
-| lab@nitc.ac.in | Lab in-charge (CSE) |
-| maintenance@nitc.ac.in | Maintenance staff |
-| timetable@nitc.ac.in | Timetable coordinator |
-| principal@nitc.ac.in | Management (reports) |
+| Email                  | Role                                                            |
+| ---------------------- | --------------------------------------------------------------- |
+| admin@nitc.ac.in       | Admin                                                           |
+| hod.cse@nitc.ac.in     | HOD (CSE)                                                       |
+| faculty@nitc.ac.in     | Faculty (CSE)                                                   |
+| student@nitc.ac.in     | Student (CSE). Bookings wait for approval.                      |
+| cr@nitc.ac.in          | Class representative (CSE). Bookings are confirmed immediately. |
+| lab@nitc.ac.in         | Lab in-charge (CSE)                                             |
+| maintenance@nitc.ac.in | Maintenance staff                                               |
+| timetable@nitc.ac.in   | Timetable coordinator                                           |
+| principal@nitc.ac.in   | Management (reports)                                            |
 
 The seed can also create `ece.student@nitc.ac.in` and `hod.ece@nitc.ac.in` for trying cross-department approvals. If your seed file does not list them, register an ECE student and ask an admin to make another account an ECE HOD.
 
@@ -84,50 +84,44 @@ smart-classroom-booking/
 
 ## Scripts (run inside `server/`)
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start the API with auto-restart |
-| `npm run db:migrate` | Create or apply migrations during development |
+| Command                  | What it does                                                |
+| ------------------------ | ----------------------------------------------------------- |
+| `npm run dev`            | Start the API with auto-restart                             |
+| `npm run db:migrate`     | Create or apply migrations during development               |
 | `npm run db:constraints` | Add the no-double-booking database rule (safe to run again) |
-| `npm run db:seed` | Demo users and rooms |
-| `npm run db:studio` | Browse the database in the browser |
+| `npm run db:seed`        | Demo users and rooms                                        |
+| `npm run db:studio`      | Browse the database in the browser                          |
 
 ## Settings (`server/.env`)
 
-| Variable | Meaning |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Long random text that signs login tokens |
-| `JWT_EXPIRES_IN` | How long a login lasts (default `1d`) |
-| `CLIENT_URL` | Address of the website (default `http://localhost:5173`). Password reset links are built from it. |
-| `ALLOWED_EMAIL_DOMAIN` | Domain allowed to register (default `nitc.ac.in`) |
-| `OPERATING_HOURS_PER_DAY` | Optional. Hours a room is open per day, for utilisation %. Default 12. |
-| `SMTP_*` | Leave empty. Email sending is not used, see [architecture](docs/architecture.md#notifications). |
+| Variable                  | Meaning                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`            | PostgreSQL connection string                                                                      |
+| `JWT_SECRET`              | Long random text that signs login tokens                                                          |
+| `JWT_EXPIRES_IN`          | How long a login lasts (default `1d`)                                                             |
+| `CLIENT_URL`              | Address of the website (default `http://localhost:5173`). Password reset links are built from it. |
+| `ALLOWED_EMAIL_DOMAIN`    | Domain allowed to register (default `nitc.ac.in`)                                                 |
+| `OPERATING_HOURS_PER_DAY` | Optional. Hours a room is open per day, for utilisation %. Default 12.                            |
+| `SMTP_*`                  | Leave empty. Email sending is not used, see [architecture](docs/architecture.md#notifications).   |
 
 ## Rules at a glance
 
-| Rule | Where to change it |
-|---|---|
-| Opening hours (8:00 AM to 8:00 PM) and the one-month window | `server/src/utils/helpers.js` (`OPEN_MINUTES`, `CLOSE_MINUTES`, `MAX_MONTHS_AHEAD`) |
-| Who needs approval (default: students) | `APPROVAL_ROLES` in `server/src/services/bookingService.js` |
-| Which department may approve (default: the student's or the room's) | `REVIEW_BY` in `server/src/services/bookingService.js` |
-| Roles a HOD or faculty may hand out | `MANAGEABLE_ROLES` in `server/src/routes/userRoutes.js` |
-| How long a password reset link works (24 hours) | `LINK_VALID_HOURS` in `server/src/services/passwordResetService.js` |
+| Rule                                                                | Where to change it                                                                  |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Opening hours (8:00 AM to 8:00 PM) and the one-month window         | `server/src/utils/helpers.js` (`OPEN_MINUTES`, `CLOSE_MINUTES`, `MAX_MONTHS_AHEAD`) |
+| Who needs approval (default: students)                              | `APPROVAL_ROLES` in `server/src/services/bookingService.js`                         |
+| Which department may approve (default: the student's or the room's) | `REVIEW_BY` in `server/src/services/bookingService.js`                              |
+| Roles a HOD or faculty may hand out                                 | `MANAGEABLE_ROLES` in `server/src/routes/userRoutes.js`                             |
+| How long a password reset link works (24 hours)                     | `LINK_VALID_HOURS` in `server/src/services/passwordResetService.js`                 |
 
 ## Documentation
 
-| Document | Contents |
-|---|---|
+| Document                                                     | Contents                                                                         |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
 | [docs/SRS.pdf](docs/SRS.pdf), [docs/SRS.docx](docs/SRS.docx) | The Software Requirements Specification, version 1.2 (PDF to read, Word to edit) |
-| [docs/setup-local.md](docs/setup-local.md) | Running the project on your computer |
-| [docs/api.md](docs/api.md) | Every API endpoint |
-| [docs/architecture.md](docs/architecture.md) | System design, data model, booking rules, approvals |
-| [docs/user-guide.md](docs/user-guide.md) | What each role can do |
-| [docs/testing.md](docs/testing.md) | Test checklist |
-| [docs/srs-traceability.md](docs/srs-traceability.md) | Which code implements each SRS requirement |
-
-## Before you start using it for real
-
-- Set a **department** for every HOD, faculty member and lab in-charge, and for every room you want a department to own (Users and Rooms pages). Reviewers without a department see no requests.
-- Keep `.env` out of Git.
-- Decide the open policy questions listed in Appendix C of the SRS (data retention, email, accessibility).
+| [docs/setup-local.md](docs/setup-local.md)                   | Running the project on your computer                                             |
+| [docs/api.md](docs/api.md)                                   | Every API endpoint                                                               |
+| [docs/architecture.md](docs/architecture.md)                 | System design, data model, booking rules, approvals                              |
+| [docs/user-guide.md](docs/user-guide.md)                     | What each role can do                                                            |
+| [docs/testing.md](docs/testing.md)                           | Test checklist                                                                   |
+| [docs/srs-traceability.md](docs/srs-traceability.md)         | Which code implements each SRS requirement                                       |
