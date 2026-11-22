@@ -12,6 +12,8 @@ import Maintenance from "./pages/Maintenance.jsx";
 import Users from "./pages/Users.jsx";
 import Reports from "./pages/Reports.jsx";
 import Department from "./pages/Department.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 
 const only = (roles, element) => (
   <ProtectedRoute roles={roles}>{element}</ProtectedRoute>
@@ -22,6 +24,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         element={
           <ProtectedRoute>

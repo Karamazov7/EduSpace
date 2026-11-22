@@ -7,6 +7,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import AppError from '../utils/AppError.js';
 import { idParam } from '../utils/helpers.js';
 import { userUpdateSchema, roleChangeSchema } from '../validators/schemas.js';
+import * as passwordResets from '../services/passwordResetService.js';
 
 const router = Router();
 const ah = asyncHandler;
@@ -77,6 +78,22 @@ router.get('/', authorize('ADMIN'), ah(async (req, res) => {
     take: 200,
   });
   res.json({ users });
+}));
+
+// ---- Admin: password resets (forgot password) --------------------------------------
+
+router.get('/reset-requests', authorize('ADMIN'), ah(async (req, res) => {
+  res.json({ requests: await passwordResets.listRequests() });
+}));
+
+router.post('/reset-requests/:rid/close', authorize('ADMIN'), ah(async (req, res) => {
+  await passwordResets.closeRequest(idParam(req, 'rid'));
+  res.status(204).end();
+}));
+
+// Creates a one-time reset link for this person. The admin hands it over; the link is shown only once.
+router.post('/:id/reset-link', authorize('ADMIN'), ah(async (req, res) => {
+  res.json(await passwordResets.issueLink(req.user, idParam(req)));
 }));
 
 router.patch('/:id', authorize('ADMIN'), validate(userUpdateSchema), ah(async (req, res) => {

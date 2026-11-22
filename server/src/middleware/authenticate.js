@@ -23,6 +23,11 @@ const authenticate = asyncHandler(async (req, res, next) => {
     throw new AppError(401, 'Account not found or deactivated');
   }
 
+  // A password reset invalidates every login token issued before it.
+  if (user.passwordChangedAt && payload.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
+    throw new AppError(401, 'Your password was changed. Please log in again.');
+  }
+
   req.user = toPublicUser(user);
   next();
 });

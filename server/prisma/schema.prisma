@@ -66,6 +66,10 @@ model User {
   blocksCreated    MaintenanceBlock[]
   notifications    Notification[]
 
+  passwordChangedAt DateTime? @map("password_changed_at")
+  passwordResets    PasswordReset[] @relation("ResetUser")
+  resetsIssued      PasswordReset[] @relation("ResetIssuer")
+
   @@map("users")
 }
 
@@ -167,4 +171,29 @@ model Broadcast {
 
   @@index([createdAt])
   @@map("broadcasts")
+}
+
+
+enum ResetStatus {
+  REQUESTED
+  ISSUED
+  USED
+  CLOSED
+}
+
+model PasswordReset {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  status     ResetStatus @default(REQUESTED)
+  tokenHash  String?     @unique
+  expiresAt  DateTime?
+  issuedById Int?
+  createdAt  DateTime    @default(now())
+  usedAt     DateTime?
+
+  user     User  @relation("ResetUser", fields: [userId], references: [id], onDelete: Cascade)
+  issuedBy User? @relation("ResetIssuer", fields: [issuedById], references: [id])
+
+  @@index([userId])
+  @@map("password_resets")
 }
