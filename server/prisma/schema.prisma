@@ -50,23 +50,23 @@ enum NotificationStatus {
 }
 
 model User {
-  id               Int      @id @default(autoincrement())
-  collegeId        String   @unique @map("college_id")
-  name             String
-  email            String   @unique
-  passwordHash     String   @map("password_hash")
-  role             Role     @default(STUDENT)
-  department       String?
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id           Int      @id @default(autoincrement())
+  collegeId    String   @unique @map("college_id")
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(STUDENT)
+  department   String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   bookings         Booking[]          @relation("Requester")
   reviewedBookings Booking[]          @relation("Reviewer")
   blocksCreated    MaintenanceBlock[]
   notifications    Notification[]
 
-  passwordChangedAt DateTime? @map("password_changed_at")
+  passwordChangedAt DateTime?       @map("password_changed_at")
   passwordResets    PasswordReset[] @relation("ResetUser")
   resetsIssued      PasswordReset[] @relation("ResetIssuer")
 
@@ -74,17 +74,17 @@ model User {
 }
 
 model Room {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique
-  type        RoomType
-  capacity    Int
-  building    String?
-  department  String?
-  facilities  String[]
-  status      RoomStatus @default(OPERATIONAL)
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  type       RoomType
+  capacity   Int
+  building   String?
+  department String?
+  facilities String[]
+  status     RoomStatus @default(OPERATIONAL)
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   equipment         Equipment[]
   bookings          Booking[]
@@ -172,7 +172,6 @@ model Broadcast {
   @@index([createdAt])
   @@map("broadcasts")
 }
-
 
 enum ResetStatus {
   REQUESTED
